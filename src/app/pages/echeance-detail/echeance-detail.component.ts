@@ -204,6 +204,82 @@ import { InstallmentDTO, CreditReservationResponseDTO } from '../../models';
                     </dl>
                   </div>
                 </div>
+
+                <!-- All Installments List -->
+                @if (reservation()!.installments && reservation()!.installments!.length > 0) {
+                  <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6">
+                      <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Toutes les Échéances de cette Réservation ({{ reservation()!.installments!.length }})
+                      </h3>
+                      <p class="mt-1 text-sm text-gray-500">
+                        L'échéance à venir est surlignée en bleu
+                      </p>
+                    </div>
+                    <div class="border-t border-gray-200">
+                      <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                          <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              N°
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Date d'échéance
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Montant
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Payé
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Statut
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                          @for (inst of reservation()!.installments!; track inst.installmentId) {
+                            <tr [class]="getInstallmentRowClass(inst)">
+                              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                #{{ inst.installmentNumber }}
+                                @if (inst.installmentId === installment()!.installmentId) {
+                                  <span class="ml-2 px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded-full">Actuelle</span>
+                                }
+                              </td>
+                              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ formatDate(inst.dueDate) }}
+                              </td>
+                              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ formatCurrency(inst.amount) }}
+                              </td>
+                              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ formatCurrency(inst.paidAmount || 0) }}
+                              </td>
+                              <td class="px-6 py-4 whitespace-nowrap">
+                                <span [class]="getInstallmentStatusClass(inst.status)">
+                                  {{ getStatusLabel(inst.status) }}
+                                </span>
+                              </td>
+                              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                @if (inst.installmentId !== installment()!.installmentId) {
+                                  <a
+                                    [routerLink]="['/echeances', inst.installmentId]"
+                                    class="text-indigo-600 hover:text-indigo-900"
+                                  >
+                                    Voir
+                                  </a>
+                                }
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                }
               }
 
               <!-- Actions -->
@@ -377,5 +453,41 @@ export class EcheanceDetailComponent implements OnInit {
       'CANCELLED': 'Annulé'
     };
     return labels[status] || status;
+  }
+
+  getInstallmentRowClass(inst: InstallmentDTO): string {
+    const today = new Date();
+    const dueDate = new Date(inst.dueDate);
+    const isPending = inst.status === 'PENDING';
+
+    // Colorer la prochaine échéance à venir en bleu
+    if (isPending && dueDate > today) {
+      const allPendingFuture = this.reservation()?.installments?.filter(i =>
+        i.status === 'PENDING' && new Date(i.dueDate) > today
+      ) || [];
+
+      // Si c'est la première échéance à venir (prochaine)
+      if (allPendingFuture.length > 0 && allPendingFuture[0].installmentId === inst.installmentId) {
+        return 'bg-blue-50';
+      }
+    }
+
+    return '';
+  }
+
+  getInstallmentStatusClass(status: string): string {
+    const baseClass = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
+    switch (status) {
+      case 'PAID':
+        return `${baseClass} bg-green-100 text-green-800`;
+      case 'PENDING':
+        return `${baseClass} bg-yellow-100 text-yellow-800`;
+      case 'LATE':
+        return `${baseClass} bg-red-100 text-red-800`;
+      case 'PARTIALLY_PAID':
+        return `${baseClass} bg-blue-100 text-blue-800`;
+      default:
+        return `${baseClass} bg-gray-100 text-gray-800`;
+    }
   }
 }

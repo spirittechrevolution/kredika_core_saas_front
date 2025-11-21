@@ -140,7 +140,7 @@ import { ReservationStatsDTO } from '../../models';
                       </svg>
                     </div>
                     <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-900">Nouvelle réservation</p>
+                      <p class="text-sm font-medium text-gray-900">Voir les réservations</p>
                     </div>
                   </div>
                 </div>

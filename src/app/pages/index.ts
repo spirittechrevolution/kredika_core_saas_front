@@ -3,6 +3,7 @@ export * from './login/login.component';
 export * from './dashboard/dashboard.component';
 export * from './partner/partner.component';
 export * from './reservation/reservation.component';
+export * from './reservation-detail/reservation-detail.component';
 export * from './echeance/echeance.component';
 export * from './echeance-detail/echeance-detail.component';
 export * from './instruction/instruction.component';
