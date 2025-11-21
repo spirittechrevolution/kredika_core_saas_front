@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthRequest, AuthResponse } from '../models';
@@ -8,9 +9,17 @@ import { AuthRequest, AuthResponse } from '../models';
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly baseUrl = 'http://localhost:7575/api/v1/auth';
 
   private readonly tokenKey = 'kredika_access_token';
+
+  /**
+   * Vérifier si nous sommes dans un navigateur
+   */
+  private isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
+  }
 
   /**
    * Authentifier un partenaire
@@ -53,21 +62,28 @@ export class AuthService {
    * Sauvegarder le token dans le localStorage
    */
   saveToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
+    if (this.isBrowser()) {
+      localStorage.setItem(this.tokenKey, token);
+    }
   }
 
   /**
    * Récupérer le token depuis le localStorage
    */
   getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    if (this.isBrowser()) {
+      return localStorage.getItem(this.tokenKey);
+    }
+    return null;
   }
 
   /**
    * Supprimer le token du localStorage
    */
   removeToken(): void {
-    localStorage.removeItem(this.tokenKey);
+    if (this.isBrowser()) {
+      localStorage.removeItem(this.tokenKey);
+    }
   }
 
   /**
