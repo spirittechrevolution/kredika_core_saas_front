@@ -9,3 +9,4 @@ export * from './echeance-detail/echeance-detail.component';
 export * from './instruction/instruction.component';
 export * from './payment-methods-config/payment-methods-config.component';
 export * from './credit-limits-dashboard/credit-limits-dashboard.component';
+export * from './developers/developers.component';
