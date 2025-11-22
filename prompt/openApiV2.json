@@ -1,0 +1,4941 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "KREDIKA_CORE_SAAS APP API",
+    "description": "API documentation",
+    "version": "v1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:7575/api",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentification",
+      "description": "API d'authentification des partenaires"
+    },
+    {
+      "name": "Gestion des Partenaires",
+      "description": "API pour la gestion des partenaires commerciaux et leurs méthodes de paiement"
+    },
+    {
+      "name": "Réservations de Crédit",
+      "description": "API pour la gestion des réservations de crédit"
+    },
+    {
+      "name": "Gestion des Échéances",
+      "description": "API pour la gestion des échéances et des paiements de crédit"
+    },
+    {
+      "name": "Instructions de Paiement",
+      "description": "API pour la génération et gestion des instructions de paiement enrichies avec les méthodes de paiement du partenaire"
+    }
+  ],
+  "paths": {
+    "/v1/partners/{id}": {
+      "get": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Récupérer un partenaire par ID",
+        "description": "Retourne les détails d'un partenaire spécifique",
+        "operationId": "getPartnerById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Partenaire trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Mettre à jour un partenaire",
+        "description": "Met à jour les informations d'un partenaire existant",
+        "operationId": "updatePartner",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Partenaire mis à jour avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Supprimer un partenaire",
+        "description": "Marque un partenaire comme INACTIVE (soft delete)",
+        "operationId": "deletePartner",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Partenaire marqué comme inactif"
+          },
+          "404": {
+            "description": "Partenaire non trouvé"
+          }
+        }
+      }
+    },
+    "/v1/partners/{id}/payment-methods": {
+      "get": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Récupérer les méthodes de paiement d'un partenaire",
+        "description": "Retourne la configuration actuelle des méthodes de paiement du partenaire",
+        "operationId": "getPaymentMethods",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration récupérée avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerPaymentMethodsDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerPaymentMethodsDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Configurer les méthodes de paiement d'un partenaire",
+        "description": "Configure les méthodes de paiement acceptées par le partenaire (Mobile Money, virement bancaire, espèces). Ces informations seront utilisées pour générer les instructions de paiement enrichies.",
+        "operationId": "configurePaymentMethods",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerPaymentMethodsDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Méthodes de paiement configurées avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Configuration invalide",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions": {
+      "post": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Générer une instruction de paiement enrichie",
+        "description": "Crée une nouvelle instruction de paiement pour une échéance. L'instruction est enrichie avec les méthodes de paiement configurées par le partenaire (Wave, Orange Money, virement bancaire, espèces). Génère automatiquement : référence unique, instructions multilingues, description SMS, codes USSD, informations bancaires, etc.",
+        "operationId": "generatePaymentInstruction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentInstructionRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Instruction générée avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides ou partenaire sans méthodes de paiement configurées",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Échéance ou partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Instruction active déjà existante",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/{id}/regenerate": {
+      "post": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Régénérer une instruction expirée",
+        "description": "Crée une nouvelle instruction pour remplacer une instruction expirée. Génère de nouvelles données avec une nouvelle référence et date d'expiration.",
+        "operationId": "regenerateExpiredInstruction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID de l'instruction expirée",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "validityHours",
+            "in": "query",
+            "description": "Durée de validité en heures pour la nouvelle instruction",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 48
+            },
+            "example": 48
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Instruction régénérée avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Instruction originale non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/mark-expired": {
+      "post": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Marquer les instructions expirées",
+        "description": "Marque automatiquement toutes les instructions de paiement expirées. Généralement appelé par un job planifié pour le nettoyage automatique.",
+        "operationId": "markExpiredInstructions",
+        "responses": {
+          "200": {
+            "description": "Instructions expirées marquées",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners": {
+      "get": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Lister tous les partenaires",
+        "description": "Retourne la liste de tous les partenaires",
+        "operationId": "getAllPartners",
+        "responses": {
+          "200": {
+            "description": "Liste des partenaires récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PartnerResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Créer un nouveau partenaire",
+        "description": "Crée un nouveau partenaire avec génération automatique de clé API",
+        "operationId": "createPartner",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Partenaire créé avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email déjà existant",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/{id}/unlock": {
+      "post": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Déverrouiller un compte partenaire",
+        "description": "Déverrouille un compte partenaire verrouillé après trop de tentatives échouées",
+        "operationId": "unlockPartnerAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Compte déverrouillé avec succès"
+          },
+          "404": {
+            "description": "Partenaire non trouvé"
+          }
+        }
+      }
+    },
+    "/v1/partners/{id}/regenerate-api-key": {
+      "post": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Régénérer la clé API",
+        "description": "Génère une nouvelle clé API pour un partenaire",
+        "operationId": "regenerateApiKey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clé API régénérée avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/{id}/recalculate-volume": {
+      "post": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Recalculer le volume de crédit d'un partenaire",
+        "description": "Recalcule le volume de crédit total à partir des crédits actifs",
+        "operationId": "recalculateCreditVolume",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Volume recalculé avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditLimitsResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/{installmentId}/reminders": {
+      "post": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Envoyer un rappel de paiement",
+        "description": "Déclenche l'envoi d'un rappel de paiement pour une échéance et incrémente le compteur de rappels.",
+        "operationId": "sendReminder",
+        "parameters": [
+          {
+            "name": "installmentId",
+            "in": "path",
+            "description": "ID de l'échéance",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rappel envoyé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Échéance non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/{installmentId}/payments": {
+      "post": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Traiter un paiement",
+        "description": "Enregistre un paiement pour une échéance et met à jour son statut. Gère automatiquement les calculs de retard/avance, les métriques de paiement, et la mise à jour de la réservation parente.",
+        "operationId": "processPayment",
+        "parameters": [
+          {
+            "name": "installmentId",
+            "in": "path",
+            "description": "ID de l'échéance",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "paidAmount",
+            "in": "query",
+            "description": "Montant payé",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "example": 41666.67
+          },
+          {
+            "name": "externalPaymentRef",
+            "in": "query",
+            "description": "Référence externe du paiement",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "PAY_ORANGE_001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paiement traité avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Montant invalide ou données incorrectes",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Échéance non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Échéance déjà payée ou annulée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/payment-events": {
+      "post": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Enregistrer un événement de paiement",
+        "description": "Enregistre un événement lié à un paiement (tentative, échec, confirmation, remboursement).",
+        "operationId": "recordPaymentEvent",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentEventRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Événement enregistré"
+          },
+          "400": {
+            "description": "Données invalides"
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Non autorisé"
+          },
+          "404": {
+            "description": "Échéance non trouvée"
+          }
+        }
+      }
+    },
+    "/v1/credits/reservations": {
+      "get": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "Lister toutes vos réservations",
+        "description": "Retourne toutes vos réservations de crédit. Utile pour les dashboards partenaires. Filtre optionnel par statut disponible.",
+        "operationId": "getMyReservations",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtre par statut (optionnel)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["RESERVED", "ACTIVE", "COMPLETED", "DEFAULTED", "CANCELLED"]
+            },
+            "example": "ACTIVE"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des réservations récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-auth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "Créer une réservation de crédit",
+        "description": "Crée une nouvelle réservation de crédit avec calcul automatique des échéances. Le système génère automatiquement le plan de paiement et les échéances. Le partnerId dans le body doit correspondre au partenaire authentifié.",
+        "operationId": "createCreditReservation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditReservationRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Réservation créée avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données de requête invalides",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié - Token manquant ou invalide",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé - Tentative de création pour un autre partenaire",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Référence externe déjà existante",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-auth": []
+          }
+        ]
+      }
+    },
+    "/v1/credits/reservations/{id}/cancel": {
+      "post": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "Annuler une réservation",
+        "description": "Annule une réservation de crédit. Seules les réservations avec statut RESERVED ou ACTIVE peuvent être annulées. Vous ne pouvez annuler que vos propres réservations.",
+        "operationId": "cancelReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID de la réservation à annuler",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Réservation annulée avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Impossible d'annuler cette réservation",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Réservation non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-auth": []
+          }
+        ]
+      }
+    },
+    "/v1/auth/validate": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "Valider un token",
+        "operationId": "validateToken",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token valide",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token invalide ou expiré",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/token": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "Authentifier un partenaire",
+        "description": "Authentifie un partenaire et retourne un token.",
+        "operationId": "authenticate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Authentification réussie",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requête invalide",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Identifiants invalides",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/revoke": {
+      "post": {
+        "tags": ["Authentification"],
+        "summary": "Révoquer un token",
+        "operationId": "revokeToken",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token révoqué",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Format invalide",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token invalide",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "tags": ["Authentification"],
+        "operationId": "refreshToken",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/{id}/view": {
+      "patch": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Marquer une instruction comme vue",
+        "description": "Met à jour le statut d'une instruction pour indiquer qu'elle a été vue par le client. Utilisé pour le suivi de l'engagement client et les métriques d'utilisation.",
+        "operationId": "markInstructionAsViewed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID de l'instruction",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Instruction marquée comme vue",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Instruction non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Instruction expirée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/{id}/send": {
+      "patch": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Marquer une instruction comme envoyée",
+        "description": "Met à jour le statut d'une instruction pour indiquer qu'elle a été envoyée au client. Utilisé pour le suivi du cycle de communication.",
+        "operationId": "markInstructionAsSent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID de l'instruction",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Instruction marquée comme envoyée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Instruction non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/{id}/status": {
+      "patch": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Mettre à jour le statut d'un partenaire",
+        "description": "Change le statut d'un partenaire (ACTIVE, INACTIVE, etc.)",
+        "operationId": "updatePartnerStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Nouveau statut",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["ACTIVE", "SUSPENDED", "INACTIVE"]
+            },
+            "example": "ACTIVE"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statut mis à jour avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/{id}/credit-limits": {
+      "get": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Consulter les limites de crédit d'un partenaire",
+        "description": "Retourne les limites et statistiques de crédit actuelles du partenaire",
+        "operationId": "getCreditLimits",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Limites récupérées avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditLimitsResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditLimitsResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Configurer les limites de crédit d'un partenaire",
+        "description": "Définit ou met à jour les limites de crédit pour un partenaire spécifique",
+        "operationId": "updateCreditLimits",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditLimitsUpdateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Limites configurées avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditLimitsResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditLimitsResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditLimitsResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/{installmentId}/status": {
+      "patch": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Mettre à jour le statut d'une échéance",
+        "description": "Met à jour manuellement le statut d'une échéance (pour corrections administratives).",
+        "operationId": "updateInstallmentStatus",
+        "parameters": [
+          {
+            "name": "installmentId",
+            "in": "path",
+            "description": "ID de l'échéance",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "newStatus",
+            "in": "query",
+            "description": "Nouveau statut",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING", "PAID", "PARTIALLY_PAID", "LATE", "CANCELLED"]
+            },
+            "example": "PAID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statut mis à jour",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Échéance non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credits/reservations/{id}/status": {
+      "patch": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "Mettre à jour le statut d'une réservation",
+        "description": "Met à jour le statut d'une réservation de crédit. Les transitions de statut sont validées selon les règles métier. Vous ne pouvez modifier que vos propres réservations.",
+        "operationId": "updateReservationStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID de la réservation",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Nouveau statut",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["RESERVED", "ACTIVE", "COMPLETED", "DEFAULTED", "CANCELLED"]
+            },
+            "example": "COMPLETED"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statut mis à jour avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Transition de statut invalide",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Réservation non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-auth": []
+          }
+        ]
+      }
+    },
+    "/v1/payment-instructions/{id}": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Récupérer une instruction par ID",
+        "description": "Retourne les détails complets d'une instruction de paiement spécifique, incluant le contenu enrichi avec toutes les options de paiement.",
+        "operationId": "getPaymentInstructionById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID de l'instruction",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Instruction trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Instruction non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/validate/{reference}": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Valider une référence de paiement",
+        "description": "Vérifie si une référence de paiement existe et est valide. Retourne les informations de base de l'instruction.",
+        "operationId": "validatePaymentReference",
+        "parameters": [
+          {
+            "name": "reference",
+            "in": "path",
+            "description": "Référence de paiement à valider",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "KRD-202411-ABC123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Référence valide",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Référence invalide ou instruction non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/stats/summary": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Obtenir les statistiques globales",
+        "description": "Retourne un résumé des statistiques globales des instructions de paiement.",
+        "operationId": "getGlobalStats",
+        "responses": {
+          "200": {
+            "description": "Statistiques récupérées",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/reference/{reference}": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Récupérer une instruction par référence",
+        "description": "Retourne une instruction de paiement par sa référence unique. Utile pour les clients qui ont reçu une référence par SMS.",
+        "operationId": "getPaymentInstructionByReference",
+        "parameters": [
+          {
+            "name": "reference",
+            "in": "path",
+            "description": "Référence unique de paiement",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "KRD-202411-ABC123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Instruction trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Instruction non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/partner/{partnerId}": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Lister les instructions par partenaire et statut",
+        "description": "Retourne les instructions de paiement filtrées par partenaire et statut. Utilisé pour les tableaux de bord partenaires.",
+        "operationId": "getInstructionsByPartnerAndStatus",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pk_5d549668c41741f6"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Statut de l'instruction (optionnel)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["GENERATED", "SENT", "VIEWED", "EXPIRED", "USED", "CANCELLED"]
+            },
+            "example": "GENERATED"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des instructions filtrées récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/partner/{partnerId}/metrics/languages": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Obtenir les statistiques par langue",
+        "description": "Retourne la distribution des instructions par langue pour un partenaire. Utile pour optimiser la communication multilingue.",
+        "operationId": "getLanguageStats",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pk_5d549668c41741f6"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistiques par langue récupérées",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/partner/{partnerId}/metrics/engagement": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Obtenir les métriques d'engagement",
+        "description": "Retourne les statistiques d'engagement pour un partenaire : taux de vue, délai moyen de visualisation, nombre d'instructions envoyées, etc.",
+        "operationId": "getEngagementMetrics",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pk_5d549668c41741f6"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Métriques d'engagement récupérées",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/partner/{partnerId}/metrics/channels": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Obtenir les statistiques par canal",
+        "description": "Retourne la distribution des instructions par canal (SMS, EMAIL, etc.) pour un partenaire.",
+        "operationId": "getChannelStats",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pk_5d549668c41741f6"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistiques par canal récupérées",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/installment/{installmentId}/active": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Lister les instructions actives d'une échéance",
+        "description": "Retourne toutes les instructions de paiement actives (non expirées) pour une échéance spécifique.",
+        "operationId": "getActiveInstructionsByInstallment",
+        "parameters": [
+          {
+            "name": "installmentId",
+            "in": "path",
+            "description": "ID de l'échéance",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des instructions actives récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/health": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Vérifier la santé de l'API des instructions",
+        "description": "Endpoint de santé pour vérifier que l'API de gestion des instructions de paiement est opérationnelle.",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "API en bonne santé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payment-instructions/expired": {
+      "get": {
+        "tags": ["Instructions de Paiement"],
+        "summary": "Lister les instructions expirées",
+        "description": "Retourne toutes les instructions de paiement qui ont expiré. Utilisé pour le nettoyage et la regénération d'instructions.",
+        "operationId": "getExpiredInstructions",
+        "responses": {
+          "200": {
+            "description": "Liste des instructions expirées récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/{id}/payment-methods/preview": {
+      "get": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Prévisualiser une instruction de paiement",
+        "description": "Génère un aperçu d'une instruction de paiement avec les méthodes configurées sans créer d'instruction réelle. Utile pour tester la configuration",
+        "operationId": "previewPaymentInstruction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "description": "Langue de l'aperçu",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "fr"
+            },
+            "example": "fr"
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "description": "Montant d'exemple",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "default": 25000
+            },
+            "example": 25000
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aperçu généré avec succès",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Partenaire sans méthodes de paiement",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/{id}/can-generate-instructions": {
+      "get": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Vérifier si un partenaire peut générer des instructions de paiement",
+        "description": "Vérifie si le partenaire a configuré au moins une méthode de paiement et si son statut est ACTIVE",
+        "operationId": "canGeneratePaymentInstructions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vérification effectuée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/stats/payment-methods": {
+      "get": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Obtenir les statistiques des méthodes de paiement",
+        "description": "Retourne des statistiques sur la configuration des méthodes de paiement pour tous les partenaires actifs",
+        "operationId": "getPaymentMethodsStats",
+        "responses": {
+          "200": {
+            "description": "Statistiques récupérées",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/health": {
+      "get": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Vérifier la santé de l'API",
+        "description": "Endpoint de santé pour vérifier que l'API des partenaires est opérationnelle",
+        "operationId": "healthCheck_1",
+        "responses": {
+          "200": {
+            "description": "API en bonne santé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/partners/active": {
+      "get": {
+        "tags": ["Gestion des Partenaires"],
+        "summary": "Lister les partenaires actifs",
+        "description": "Retourne uniquement les partenaires avec statut ACTIVE",
+        "operationId": "getActivePartners",
+        "responses": {
+          "200": {
+            "description": "Liste des partenaires actifs récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PartnerResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/{id}": {
+      "get": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Récupérer une échéance par ID",
+        "description": "Retourne les détails complets d'une échéance spécifique, incluant l'historique des paiements et les métriques.",
+        "operationId": "getInstallmentById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID de l'échéance",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Échéance trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Échéance non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallmentDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/upcoming": {
+      "get": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Lister les échéances à venir",
+        "description": "Retourne les échéances dont la date d'échéance est dans les prochains jours.",
+        "operationId": "getUpcomingInstallments",
+        "parameters": [
+          {
+            "name": "daysAhead",
+            "in": "query",
+            "description": "Nombre de jours à venir",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30
+            },
+            "example": 30
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des échéances à venir récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstallmentDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstallmentDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstallmentDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/stats": {
+      "get": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Obtenir les statistiques des échéances",
+        "description": "Retourne des statistiques globales sur les échéances (totales, payées, en retard, à venir).",
+        "operationId": "getInstallmentsStats",
+        "responses": {
+          "200": {
+            "description": "Statistiques récupérées",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/reservation/{creditReservationId}": {
+      "get": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Lister les échéances d'une réservation",
+        "description": "Retourne toutes les échéances associées à une réservation de crédit spécifique.",
+        "operationId": "getInstallmentsByReservation",
+        "parameters": [
+          {
+            "name": "creditReservationId",
+            "in": "path",
+            "description": "ID de la réservation de crédit",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des échéances récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstallmentDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstallmentDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstallmentDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/overdue": {
+      "get": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Lister les échéances échues",
+        "description": "Retourne toutes les échéances qui ont dépassé leur date d'échéance et qui ne sont pas encore payées.",
+        "operationId": "getOverdueInstallments",
+        "responses": {
+          "200": {
+            "description": "Liste des échéances échues récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstallmentDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstallmentDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Non autorisé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstallmentDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/installments/health": {
+      "get": {
+        "tags": ["Gestion des Échéances"],
+        "summary": "Vérifier la santé de l'API des échéances",
+        "description": "Endpoint de santé pour vérifier que l'API de gestion des échéances est opérationnelle.",
+        "operationId": "healthCheck_2",
+        "responses": {
+          "200": {
+            "description": "API en bonne santé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credits/reservations/{id}": {
+      "get": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "Récupérer une réservation par ID",
+        "description": "Retourne les détails complets d'une réservation de crédit spécifique, incluant les échéances et les métriques de paiement. Vous ne pouvez accéder qu'à vos propres réservations.",
+        "operationId": "getCreditReservationById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID de la réservation de crédit",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Réservation trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé - Cette réservation ne vous appartient pas",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Réservation non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-auth": []
+          }
+        ]
+      }
+    },
+    "/v1/credits/reservations/stats": {
+      "get": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "Statistiques de vos réservations",
+        "description": "Retourne les statistiques agrégées de vos réservations : nombre total, actives, complétées, montants, etc.",
+        "operationId": "getMyReservationStats",
+        "responses": {
+          "200": {
+            "description": "Statistiques récupérées",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationStatsDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationStatsDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-auth": []
+          }
+        ]
+      }
+    },
+    "/v1/credits/reservations/partner/{partnerId}": {
+      "get": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "[ADMIN] Lister les réservations d'un partenaire",
+        "description": "Retourne toutes les réservations de crédit pour un partenaire spécifique. Endpoint réservé aux administrateurs.",
+        "operationId": "getReservationsByPartner",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pk_5d549668c41741f6"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des réservations récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès réservé aux administrateurs",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-auth": []
+          }
+        ]
+      }
+    },
+    "/v1/credits/reservations/partner/{partnerId}/status/{status}": {
+      "get": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "[ADMIN] Lister les réservations par statut",
+        "description": "Retourne les réservations d'un partenaire filtrées par statut (RESERVED, ACTIVE, COMPLETED, CANCELLED, DEFAULTED). Endpoint réservé aux administrateurs.",
+        "operationId": "getReservationsByPartnerAndStatus",
+        "parameters": [
+          {
+            "name": "partnerId",
+            "in": "path",
+            "description": "ID du partenaire",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "pk_5d549668c41741f6"
+          },
+          {
+            "name": "status",
+            "in": "path",
+            "description": "Statut de la réservation",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["RESERVED", "ACTIVE", "COMPLETED", "DEFAULTED", "CANCELLED"]
+            },
+            "example": "ACTIVE"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste des réservations filtrées récupérée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès réservé aux administrateurs",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Partenaire non trouvé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-auth": []
+          }
+        ]
+      }
+    },
+    "/v1/credits/reservations/health": {
+      "get": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "Vérifier la santé de l'API des réservations",
+        "description": "Endpoint de santé pour vérifier que l'API des réservations de crédit est opérationnelle.",
+        "operationId": "healthCheck_3",
+        "responses": {
+          "200": {
+            "description": "API en bonne santé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credits/reservations/external/{externalOrderRef}": {
+      "get": {
+        "tags": ["Réservations de Crédit"],
+        "summary": "Récupérer une réservation par référence externe",
+        "description": "Retourne les détails d'une réservation en utilisant la référence externe fournie par le partenaire lors de la création. Vous ne pouvez accéder qu'à vos propres réservations.",
+        "operationId": "getCreditReservationByExternalRef",
+        "parameters": [
+          {
+            "name": "externalOrderRef",
+            "in": "path",
+            "description": "Référence externe de la commande",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "CMD_ORANGE_001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Réservation trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Accès refusé",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Réservation non trouvée",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditReservationResponseDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer-auth": []
+          }
+        ]
+      }
+    },
+    "/v1/auth/health": {
+      "get": {
+        "tags": ["Authentification"],
+        "operationId": "healthCheck_4",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BankTransferConfigDTO": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "bankCode": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "bankName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "branchName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "accountName": {
+            "type": "string",
+            "maxLength": 150,
+            "minLength": 0
+          },
+          "accountNumber": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "iban": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "swiftCode": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "ribCode": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "logoUrl": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "instructions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "paymentSteps": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "fees": {
+            "$ref": "#/components/schemas/MobileMoneyFeesDTO"
+          },
+          "processingTime": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 3,
+            "minLength": 0
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 3,
+            "minLength": 0
+          }
+        }
+      },
+      "CashPaymentConfigDTO": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "locations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentLocationDTO"
+            }
+          },
+          "instructions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "requiredDocuments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "FeeTierDTO": {
+        "type": "object",
+        "properties": {
+          "minAmount": {
+            "type": "number"
+          },
+          "maxAmount": {
+            "type": "number"
+          },
+          "feeAmount": {
+            "type": "number"
+          },
+          "feePercentage": {
+            "type": "number"
+          }
+        }
+      },
+      "MobileMoneyConfigDTO": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "displayName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "merchantCode": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "merchantName": {
+            "type": "string",
+            "maxLength": 150,
+            "minLength": 0
+          },
+          "merchantPhone": {
+            "type": "string",
+            "pattern": "^\\+?[0-9]{9,15}$"
+          },
+          "shortCode": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "ussdCode": {
+            "type": "string",
+            "maxLength": 150,
+            "minLength": 0
+          },
+          "ussdTemplate": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "qrCodeData": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "qrCodeTemplate": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "apiCallbackUrl": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "logoUrl": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "brandColor": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 0
+          },
+          "instructions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "paymentSteps": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "fees": {
+            "$ref": "#/components/schemas/MobileMoneyFeesDTO"
+          },
+          "supportedCountries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportedCurrencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limits": {
+            "$ref": "#/components/schemas/TransactionLimitsDTO"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "MobileMoneyFeesDTO": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "value": {
+            "type": "number"
+          },
+          "paidBy": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "minAmount": {
+            "type": "number"
+          },
+          "maxAmount": {
+            "type": "number"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeeTierDTO"
+            }
+          }
+        }
+      },
+      "PartnerPaymentMethodsDTO": {
+        "type": "object",
+        "properties": {
+          "mobileMoneyProviders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MobileMoneyConfigDTO"
+            }
+          },
+          "bankTransfer": {
+            "$ref": "#/components/schemas/BankTransferConfigDTO"
+          },
+          "cash": {
+            "$ref": "#/components/schemas/CashPaymentConfigDTO"
+          },
+          "preferredMethod": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "displayOrder": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "defaultCurrency": {
+            "type": "string",
+            "maxLength": 3,
+            "minLength": 0
+          },
+          "defaultCountry": {
+            "type": "string",
+            "maxLength": 3,
+            "minLength": 0
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "enabledMobileMoneyProviders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MobileMoneyConfigDTO"
+            }
+          }
+        }
+      },
+      "PartnerRequestDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2
+          },
+          "contactEmail": {
+            "type": "string"
+          },
+          "contactPhone": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "callbackUrl": {
+            "type": "string",
+            "pattern": "^https?://.*"
+          },
+          "apiKey": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "commissionRate": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0
+          },
+          "maxCreditAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "maxDurationMonths": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 24,
+            "minimum": 1
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "businessSector": {
+            "type": "string"
+          },
+          "registrationNumber": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "maxCreditsPerMonth": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "paymentMethods": {
+            "$ref": "#/components/schemas/PartnerPaymentMethodsDTO"
+          }
+        },
+        "required": [
+          "callbackUrl",
+          "commissionRate",
+          "contactEmail",
+          "maxCreditAmount",
+          "maxDurationMonths",
+          "name"
+        ]
+      },
+      "PaymentLocationDTO": {
+        "type": "object",
+        "properties": {
+          "locationId": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 150,
+            "minLength": 0
+          },
+          "type": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "region": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "postalCode": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 3,
+            "minLength": 0
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "^\\+?[0-9]{9,15}$"
+          },
+          "openingHours": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "instructions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TransactionLimitsDTO": {
+        "type": "object",
+        "properties": {
+          "minAmount": {
+            "type": "number"
+          },
+          "maxAmount": {
+            "type": "number"
+          },
+          "dailyLimit": {
+            "type": "number"
+          },
+          "monthlyLimit": {
+            "type": "number"
+          }
+        }
+      },
+      "PartnerResponseDTO": {
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "contactEmail": {
+            "type": "string"
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "callbackUrl": {
+            "type": "string"
+          },
+          "apiKey": {
+            "type": "string"
+          },
+          "partnerKey": {
+            "type": "string"
+          },
+          "commissionRate": {
+            "type": "number"
+          },
+          "maxCreditAmount": {
+            "type": "number"
+          },
+          "maxDurationMonths": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "businessSector": {
+            "type": "string"
+          },
+          "registrationNumber": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totalReservations": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCreditVolume": {
+            "type": "number"
+          },
+          "totalCommissionEarned": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "SUSPENDED", "INACTIVE"]
+          },
+          "portfolioPerformanceScore": {
+            "type": "number"
+          },
+          "defaultRate": {
+            "type": "number"
+          },
+          "latePaymentRate": {
+            "type": "number"
+          },
+          "totalActiveCredits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCompletedCredits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "partnerMetrics": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "lastMetricsUpdate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "maxCreditsPerMonth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "apiKeyVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "apiKeyLastRotated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "apiKeyExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "authProvider": {
+            "type": "string"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "paymentMethods": {
+            "$ref": "#/components/schemas/PartnerPaymentMethodsDTO"
+          },
+          "hasPaymentMethodsConfigured": {
+            "type": "boolean"
+          },
+          "activePaymentMethodsCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaymentInstructionRequestDTO": {
+        "type": "object",
+        "properties": {
+          "installmentId": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string"
+          },
+          "amountDue": {
+            "type": "number",
+            "minimum": 0
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "instructionType": {
+            "type": "string",
+            "pattern": "STANDARD|REMINDER_3_DAYS|REMINDER_1_DAY|URGENT|OVERDUE"
+          },
+          "language": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "validityHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "callbackUrl": {
+            "type": "string"
+          },
+          "customFields": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "instructionData": {
+            "type": "string",
+            "deprecated": true
+          },
+          "paymentDescription": {
+            "type": "string",
+            "deprecated": true,
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": ["amountDue", "dueDate", "installmentId", "instructionType", "partnerId"]
+      },
+      "PaymentInstructionResponseDTO": {
+        "type": "object",
+        "properties": {
+          "paymentInstructionId": {
+            "type": "string"
+          },
+          "installmentId": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string"
+          },
+          "amountDue": {
+            "type": "number"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "instructionType": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "instructionContent": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "shortDescription": {
+            "type": "string"
+          },
+          "instructionData": {
+            "type": "string"
+          },
+          "paymentDescription": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["GENERATED", "SENT", "VIEWED", "EXPIRED", "USED", "CANCELLED"]
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "viewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "callbackUrl": {
+            "type": "string"
+          },
+          "validityHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreditLimitsResponseDTO": {
+        "type": "object",
+        "description": "Informations sur les limites de crédit d'un partenaire",
+        "properties": {
+          "partnerKey": {
+            "type": "string",
+            "description": "Clé du partenaire"
+          },
+          "partnerName": {
+            "type": "string",
+            "description": "Nom du partenaire"
+          },
+          "maxCreditAmount": {
+            "type": "number",
+            "description": "Montant maximum de crédit autorisé"
+          },
+          "maxDurationMonths": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Durée maximum autorisée en mois"
+          },
+          "commissionRate": {
+            "type": "number",
+            "description": "Taux de commission appliqué (%)"
+          },
+          "defaultInterestRate": {
+            "type": "number",
+            "description": "Taux d'intérêt par défaut (%)"
+          },
+          "totalActiveCredits": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nombre total de crédits actifs"
+          },
+          "totalCreditVolume": {
+            "type": "number",
+            "description": "Volume total de crédit accordé"
+          },
+          "portfolioPerformanceScore": {
+            "type": "number",
+            "description": "Score de performance du portefeuille"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date de dernière mise à jour"
+          },
+          "utilizationRate": {
+            "type": "number",
+            "description": "Utilisation actuelle (%)"
+          },
+          "remainingCreditLimit": {
+            "type": "number",
+            "description": "Crédit restant disponible"
+          },
+          "hasAvailableCredit": {
+            "type": "boolean",
+            "description": "Indique si le partenaire a du crédit disponible"
+          },
+          "estimatedRemainingCredits": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nombre de crédits restants pouvant être créés (estimation)"
+          },
+          "averageCreditAmount": {
+            "type": "number",
+            "description": "Montant moyen par crédit actif"
+          }
+        }
+      },
+      "InstallmentDTO": {
+        "type": "object",
+        "properties": {
+          "installmentId": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "transactionReference": {
+            "type": "string"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": ["CASH", "WAVE", "ORANGE_MONEY", "CARD", "TRANSFER"]
+          },
+          "paidAmount": {
+            "type": "number"
+          },
+          "paidDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "PAID", "PARTIALLY_PAID", "LATE", "CANCELLED"]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "installmentNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "principalAmount": {
+            "type": "number"
+          },
+          "interestAmount": {
+            "type": "number"
+          },
+          "lateFee": {
+            "type": "number"
+          },
+          "daysLate": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paymentAttemptCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstPaymentAttempt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastPaymentAttempt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "daysEarly": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasLatePayment": {
+            "type": "boolean"
+          },
+          "paymentPattern": {
+            "type": "string"
+          },
+          "totalPaidAmount": {
+            "type": "number"
+          },
+          "reminderCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "autoPaid": {
+            "type": "boolean"
+          },
+          "creditReservationId": {
+            "type": "string"
+          },
+          "paymentEvents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentEventResponseDTO"
+            }
+          },
+          "paymentInstructions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentInstructionResponseDTO"
+            }
+          },
+          "paymentAnalytics": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentEventResponseDTO": {
+        "type": "object",
+        "properties": {
+          "paymentEventId": {
+            "type": "string"
+          },
+          "installmentId": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string"
+          },
+          "externalPaymentRef": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "PAYMENT_INITIATED",
+              "PAYMENT_CONFIRMED",
+              "PAYMENT_FAILED",
+              "PAYMENT_PENDING",
+              "PAYMENT_CANCELLED",
+              "PAYMENT_REFUNDED",
+              "PAYMENT_PARTIAL",
+              "PAYMENT_RETRY"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eventMetadata": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "source": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "providerCode": {
+            "type": "string"
+          },
+          "customerPhone": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "isSuccessful": {
+            "type": "boolean"
+          },
+          "processingDurationMs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentEventRequestDTO": {
+        "type": "object",
+        "properties": {
+          "installmentId": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string"
+          },
+          "externalPaymentRef": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "PAYMENT_INITIATED",
+              "PAYMENT_CONFIRMED",
+              "PAYMENT_FAILED",
+              "PAYMENT_PENDING",
+              "PAYMENT_CANCELLED",
+              "PAYMENT_REFUNDED",
+              "PAYMENT_PARTIAL",
+              "PAYMENT_RETRY"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 3,
+            "minLength": 0
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eventMetadata": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "providerCode": {
+            "type": "string"
+          },
+          "customerPhone": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          }
+        },
+        "required": ["amount", "eventType", "externalPaymentRef", "installmentId", "partnerId"]
+      },
+      "CreditReservationRequestDTO": {
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string"
+          },
+          "externalOrderRef": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "externalCustomerRef": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "purchaseAmount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "installmentCount": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 36,
+            "minimum": 1
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "totalActiveCredits": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nombre maximum de crédits actifs configuré pour ce partenaire",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "externalCustomerRef",
+          "externalOrderRef",
+          "installmentCount",
+          "partnerId",
+          "purchaseAmount"
+        ]
+      },
+      "ContentDisposition": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "charset": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "deprecated": true
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time",
+            "deprecated": true
+          },
+          "modificationDate": {
+            "type": "string",
+            "format": "date-time",
+            "deprecated": true
+          },
+          "readDate": {
+            "type": "string",
+            "format": "date-time",
+            "deprecated": true
+          },
+          "inline": {
+            "type": "boolean"
+          },
+          "formData": {
+            "type": "boolean"
+          },
+          "attachment": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "properties": {
+              "connection": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "ifModifiedSince": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "contentType": {
+                "$ref": "#/components/schemas/MediaType"
+              },
+              "contentLength": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "accessControlAllowHeaders": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "empty": {
+                "type": "boolean"
+              },
+              "location": {
+                "type": "string",
+                "format": "uri"
+              },
+              "host": {
+                "type": "object",
+                "properties": {
+                  "hostString": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "object",
+                    "properties": {
+                      "hostAddress": {
+                        "type": "string"
+                      },
+                      "address": {
+                        "type": "string",
+                        "format": "byte"
+                      },
+                      "hostName": {
+                        "type": "string"
+                      },
+                      "linkLocalAddress": {
+                        "type": "boolean"
+                      },
+                      "multicastAddress": {
+                        "type": "boolean"
+                      },
+                      "anyLocalAddress": {
+                        "type": "boolean"
+                      },
+                      "loopbackAddress": {
+                        "type": "boolean"
+                      },
+                      "siteLocalAddress": {
+                        "type": "boolean"
+                      },
+                      "mcglobal": {
+                        "type": "boolean"
+                      },
+                      "mcnodeLocal": {
+                        "type": "boolean"
+                      },
+                      "mclinkLocal": {
+                        "type": "boolean"
+                      },
+                      "mcsiteLocal": {
+                        "type": "boolean"
+                      },
+                      "mcorgLocal": {
+                        "type": "boolean"
+                      },
+                      "canonicalHostName": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "port": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "unresolved": {
+                    "type": "boolean"
+                  },
+                  "hostName": {
+                    "type": "string"
+                  }
+                }
+              },
+              "all": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "writeOnly": true
+              },
+              "lastModified": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "date": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "origin": {
+                "type": "string"
+              },
+              "range": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/HttpRange"
+                }
+              },
+              "contentDisposition": {
+                "$ref": "#/components/schemas/ContentDisposition"
+              },
+              "allow": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/HttpMethod"
+                },
+                "uniqueItems": true
+              },
+              "acceptCharset": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "cacheControl": {
+                "type": "string"
+              },
+              "accessControlAllowCredentials": {
+                "type": "boolean"
+              },
+              "accessControlExposeHeaders": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "accessControlRequestHeaders": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "accessControlAllowOrigin": {
+                "type": "string"
+              },
+              "accessControlAllowMethods": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/HttpMethod"
+                }
+              },
+              "accessControlRequestMethod": {
+                "$ref": "#/components/schemas/HttpMethod"
+              },
+              "accept": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MediaType"
+                }
+              },
+              "etag": {
+                "type": "string"
+              },
+              "expires": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "upgrade": {
+                "type": "string"
+              },
+              "ifMatch": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "vary": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "pragma": {
+                "type": "string"
+              },
+              "contentLanguage": {
+                "type": "object",
+                "properties": {
+                  "language": {
+                    "type": "string"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
+                  "variant": {
+                    "type": "string"
+                  },
+                  "script": {
+                    "type": "string"
+                  },
+                  "unicodeLocaleAttributes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "uniqueItems": true
+                  },
+                  "unicodeLocaleKeys": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "uniqueItems": true
+                  },
+                  "displayLanguage": {
+                    "type": "string"
+                  },
+                  "displayScript": {
+                    "type": "string"
+                  },
+                  "displayCountry": {
+                    "type": "string"
+                  },
+                  "displayVariant": {
+                    "type": "string"
+                  },
+                  "extensionKeys": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "uniqueItems": true
+                  },
+                  "iso3Language": {
+                    "type": "string"
+                  },
+                  "iso3Country": {
+                    "type": "string"
+                  }
+                }
+              },
+              "acceptPatch": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MediaType"
+                }
+              },
+              "bearerAuth": {
+                "type": "string",
+                "writeOnly": true
+              },
+              "ifNoneMatch": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acceptLanguage": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "range": {
+                      "type": "string"
+                    },
+                    "weight": {
+                      "type": "number",
+                      "format": "double"
+                    }
+                  }
+                }
+              },
+              "basicAuth": {
+                "type": "string",
+                "writeOnly": true
+              },
+              "accessControlMaxAge": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "ifUnmodifiedSince": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "acceptLanguageAsLocales": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "language": {
+                      "type": "string"
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "country": {
+                      "type": "string"
+                    },
+                    "variant": {
+                      "type": "string"
+                    },
+                    "script": {
+                      "type": "string"
+                    },
+                    "unicodeLocaleAttributes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "uniqueItems": true
+                    },
+                    "unicodeLocaleKeys": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "uniqueItems": true
+                    },
+                    "displayLanguage": {
+                      "type": "string"
+                    },
+                    "displayScript": {
+                      "type": "string"
+                    },
+                    "displayCountry": {
+                      "type": "string"
+                    },
+                    "displayVariant": {
+                      "type": "string"
+                    },
+                    "extensionKeys": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "uniqueItems": true
+                    },
+                    "iso3Language": {
+                      "type": "string"
+                    },
+                    "iso3Country": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "body": {
+            "$ref": "#/components/schemas/ProblemDetail"
+          },
+          "statusCode": {
+            "$ref": "#/components/schemas/HttpStatusCode"
+          },
+          "typeMessageCode": {
+            "type": "string"
+          },
+          "detailMessageCode": {
+            "type": "string"
+          },
+          "detailMessageArguments": {
+            "type": "array",
+            "items": {}
+          },
+          "titleMessageCode": {
+            "type": "string"
+          }
+        }
+      },
+      "HttpMethod": {
+        "type": "object"
+      },
+      "HttpRange": {
+        "type": "object"
+      },
+      "HttpStatusCode": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean"
+          },
+          "is4xxClientError": {
+            "type": "boolean"
+          },
+          "is5xxServerError": {
+            "type": "boolean"
+          },
+          "is3xxRedirection": {
+            "type": "boolean"
+          },
+          "is2xxSuccessful": {
+            "type": "boolean"
+          },
+          "is1xxInformational": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MediaType": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "subtype": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "qualityValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "charset": {
+            "type": "string"
+          },
+          "concrete": {
+            "type": "boolean"
+          },
+          "subtypeSuffix": {
+            "type": "string"
+          },
+          "wildcardSubtype": {
+            "type": "boolean"
+          },
+          "wildcardType": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProblemDetail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "CreditReservationResponseDTO": {
+        "type": "object",
+        "properties": {
+          "creditReservationId": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string"
+          },
+          "externalOrderRef": {
+            "type": "string"
+          },
+          "externalCustomerRef": {
+            "type": "string"
+          },
+          "purchaseAmount": {
+            "type": "number"
+          },
+          "installmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["RESERVED", "ACTIVE", "COMPLETED", "DEFAULTED", "CANCELLED"]
+          },
+          "paymentPlanJson": {
+            "type": "string"
+          },
+          "reservationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "expectedCompletionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "actualCompletionDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "interestAmount": {
+            "type": "number"
+          },
+          "monthlyPayment": {
+            "type": "number"
+          },
+          "downPaymentAmount": {
+            "type": "number"
+          },
+          "installments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstallmentDTO"
+            }
+          },
+          "repaymentRate": {
+            "type": "number"
+          },
+          "totalInstallmentsPaid": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalInstallmentsLate": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "overallPaymentBehavior": {
+            "type": "string"
+          },
+          "portfolioAnalytics": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "hasDefaulted": {
+            "type": "boolean"
+          },
+          "firstDefaultDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "partnerId": {
+            "type": "string"
+          },
+          "partnerName": {
+            "type": "string"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "error": {
+            "type": "string"
+          },
+          "errorDescription": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthRequest": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string"
+          },
+          "clientSecret": {
+            "type": "string"
+          },
+          "grantType": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          }
+        },
+        "required": ["clientId", "clientSecret"]
+      },
+      "CreditLimitsUpdateDTO": {
+        "type": "object",
+        "description": "Configuration des limites de crédit pour un partenaire",
+        "properties": {
+          "maxCreditAmount": {
+            "type": "number",
+            "description": "Montant maximum de crédit autorisé",
+            "example": 10000000
+          },
+          "maxDurationMonths": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Durée maximum autorisée en mois",
+            "example": 12,
+            "minimum": 1
+          },
+          "commissionRate": {
+            "type": "number",
+            "description": "Taux de commission appliqué (%)",
+            "example": 5,
+            "minimum": 0
+          },
+          "defaultInterestRate": {
+            "type": "number",
+            "description": "Taux d'intérêt par défaut (%)",
+            "example": 2.5,
+            "minimum": 0
+          },
+          "totalActiveCredits": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nombre maximum de crédits actifs autorisés",
+            "example": 50,
+            "minimum": 0
+          }
+        }
+      },
+      "ReservationStatsDTO": {
+        "type": "object",
+        "properties": {
+          "totalReservations": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeReservations": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completedReservations": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cancelledReservations": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "defaultedReservations": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "averageAmount": {
+            "type": "number"
+          }
+        }
+      },
+      "HealthCheckResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

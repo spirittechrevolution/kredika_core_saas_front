@@ -1,14 +1,14 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NavbarComponent, FooterComponent, ReservationModalComponent } from '../../components';
+import { RouterLink } from '@angular/router';
+import { NavbarComponent, FooterComponent } from '../../components';
 import { CreditReservationService } from '../../services';
-import { ToastService } from '../../services/toast.service';
-import { CreditReservationResponseDTO, CreditReservationRequestDTO } from '../../models';
+import { CreditReservationResponseDTO } from '../../models';
 
 @Component({
   selector: 'app-reservation',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, FooterComponent, ReservationModalComponent],
+  imports: [CommonModule, RouterLink, NavbarComponent, FooterComponent],
   template: `
     <div class="min-h-screen flex flex-col bg-gray-50">
       <app-navbar />
@@ -24,7 +24,6 @@ import { CreditReservationResponseDTO, CreditReservationRequestDTO } from '../..
                 </p>
               </div>
               <button
-                (click)="openCreateModal()"
                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
               >
                 Nouvelle réservation
@@ -83,9 +82,12 @@ import { CreditReservationResponseDTO, CreditReservationRequestDTO } from '../..
                           </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button class="text-indigo-600 hover:text-indigo-900">
+                          <a
+                            [routerLink]="['/reservations', reservation.creditReservationId]"
+                            class="text-indigo-600 hover:text-indigo-900"
+                          >
                             Détails
-                          </button>
+                          </a>
                         </td>
                       </tr>
                     } @empty {
@@ -105,21 +107,13 @@ import { CreditReservationResponseDTO, CreditReservationRequestDTO } from '../..
 
       <app-footer />
     </div>
-
-    <app-reservation-modal
-      [open]="isModalOpen()"
-      (closeModal)="closeModal()"
-      (submitReservation)="handleSubmit($event)"
-    />
   `
 })
 export class ReservationComponent implements OnInit {
   private readonly creditReservationService = inject(CreditReservationService);
-  private readonly toastService = inject(ToastService);
 
   reservations = signal<CreditReservationResponseDTO[]>([]);
   loading = signal(true);
-  isModalOpen = signal(false);
 
   ngOnInit(): void {
     this.loadReservations();
@@ -133,29 +127,7 @@ export class ReservationComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading reservations:', error);
-        this.toastService.error('Erreur lors du chargement des réservations');
         this.loading.set(false);
-      }
-    });
-  }
-
-  openCreateModal(): void {
-    this.isModalOpen.set(true);
-  }
-
-  closeModal(): void {
-    this.isModalOpen.set(false);
-  }
-
-  handleSubmit(reservationData: CreditReservationRequestDTO): void {
-    this.creditReservationService.createCreditReservation(reservationData).subscribe({
-      next: (newReservation: CreditReservationResponseDTO) => {
-        this.reservations.update(reservations => [...reservations, newReservation]);
-        this.toastService.success('Réservation créée avec succès');
-      },
-      error: (error: any) => {
-        console.error('Error creating reservation:', error);
-        this.toastService.error('Erreur lors de la création de la réservation');
       }
     });
   }
