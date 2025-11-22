@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { NavbarComponent, FooterComponent } from '../../components';
 import { CreditReservationService } from '../../services';
 import { CreditReservationResponseDTO } from '../../models';
@@ -7,7 +8,7 @@ import { CreditReservationResponseDTO } from '../../models';
 @Component({
   selector: 'app-reservation',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, FooterComponent],
+  imports: [CommonModule, RouterLink, NavbarComponent, FooterComponent],
   template: `
     <div class="min-h-screen flex flex-col bg-gray-50">
       <app-navbar />
@@ -81,9 +82,12 @@ import { CreditReservationResponseDTO } from '../../models';
                           </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button class="text-indigo-600 hover:text-indigo-900">
+                          <a
+                            [routerLink]="['/reservations', reservation.creditReservationId]"
+                            class="text-indigo-600 hover:text-indigo-900"
+                          >
                             Détails
-                          </button>
+                          </a>
                         </td>
                       </tr>
                     } @empty {
