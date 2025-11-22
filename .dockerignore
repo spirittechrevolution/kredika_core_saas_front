@@ -1,0 +1,43 @@
+# Dépendances Node
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Build output
+dist
+.angular
+.vscode
+
+# IDE
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Tests
+coverage
+*.spec.ts
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Logs
+logs
+*.log
