@@ -10,13 +10,15 @@ import {
   EcheanceDetailComponent,
   InstructionComponent,
   PaymentMethodsConfigComponent,
-  CreditLimitsDashboardComponent
+  CreditLimitsDashboardComponent,
+  DevelopersComponent
 } from './pages';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },
+  { path: 'developers', component: DevelopersComponent },
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
   { path: 'partenaires', component: PartnerComponent, canActivate: [authGuard] },
   { path: 'reservations', component: ReservationComponent, canActivate: [authGuard] },
