@@ -92,4 +92,41 @@ export class AuthService {
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
+
+  /**
+   * Décoder le JWT pour extraire le partnerId
+   */
+  private decodeToken(token: string): any {
+    try {
+      const payload = token.split('.')[1];
+      return JSON.parse(atob(payload));
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Récupérer le partnerId depuis le token
+   */
+  getPartnerId(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    const decoded = this.decodeToken(token);
+    return decoded?.partnerId || decoded?.sub || null;
+  }
+
+  /**
+   * Récupérer les informations du partenaire connecté
+   */
+  getPartnerInfo(): { partnerId: string | null; partnerName: string | null } {
+    const token = this.getToken();
+    if (!token) return { partnerId: null, partnerName: null };
+
+    const decoded = this.decodeToken(token);
+    return {
+      partnerId: decoded?.partnerId || decoded?.sub || null,
+      partnerName: decoded?.partnerName || decoded?.name || null
+    };
+  }
 }

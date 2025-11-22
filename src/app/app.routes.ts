@@ -8,7 +8,9 @@ import {
   ReservationDetailComponent,
   EcheanceComponent,
   EcheanceDetailComponent,
-  InstructionComponent
+  InstructionComponent,
+  PaymentMethodsConfigComponent,
+  CreditLimitsDashboardComponent
 } from './pages';
 import { authGuard } from './guards/auth.guard';
 
@@ -22,5 +24,7 @@ export const routes: Routes = [
   { path: 'echeances', component: EcheanceComponent, canActivate: [authGuard] },
   { path: 'echeances/:id', component: EcheanceDetailComponent, canActivate: [authGuard] },
   { path: 'instructions', component: InstructionComponent, canActivate: [authGuard] },
+  { path: 'payment-methods/config', component: PaymentMethodsConfigComponent, canActivate: [authGuard] },
+  { path: 'credit-limits', component: CreditLimitsDashboardComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' }
 ];

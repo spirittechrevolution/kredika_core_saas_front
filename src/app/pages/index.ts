@@ -7,3 +7,5 @@ export * from './reservation-detail/reservation-detail.component';
 export * from './echeance/echeance.component';
 export * from './echeance-detail/echeance-detail.component';
 export * from './instruction/instruction.component';
+export * from './payment-methods-config/payment-methods-config.component';
+export * from './credit-limits-dashboard/credit-limits-dashboard.component';

@@ -1,7 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PaymentInstructionRequestDTO, PaymentInstructionResponseDTO } from '../models';
+import {
+  PaymentInstructionRequestDTO,
+  PaymentInstructionResponseDTO,
+  InstructionEngagementMetricsDTO,
+  InstructionLanguageStatsDTO,
+  InstructionChannelStatsDTO,
+  InstructionGlobalStatsDTO,
+  PaymentReferenceValidationDTO
+} from '../models';
 
 @Injectable({
   providedIn: 'root'
@@ -24,6 +32,13 @@ export class PaymentInstructionService {
    */
   getPaymentInstructionById(id: string): Observable<PaymentInstructionResponseDTO> {
     return this.http.get<PaymentInstructionResponseDTO>(`${this.baseUrl}/${id}`);
+  }
+
+  /**
+   * Récupère une instruction par référence
+   */
+  getInstructionByReference(reference: string): Observable<PaymentInstructionResponseDTO> {
+    return this.http.get<PaymentInstructionResponseDTO>(`${this.baseUrl}/reference/${reference}`);
   }
 
   /**
@@ -78,33 +93,63 @@ export class PaymentInstructionService {
   /**
    * Régénérer une instruction expirée
    */
-  regenerateExpiredInstruction(id: string): Observable<PaymentInstructionResponseDTO> {
+  regenerateExpiredInstruction(id: string, validityHours: number = 48): Observable<PaymentInstructionResponseDTO> {
+    const params = new HttpParams().set('validityHours', validityHours.toString());
     return this.http.post<PaymentInstructionResponseDTO>(
       `${this.baseUrl}/${id}/regenerate`,
-      null
+      null,
+      { params }
     );
   }
 
   /**
    * Marquer les instructions expirées (job automatique)
    */
-  markExpiredInstructions(): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/mark-expired`, null);
+  markExpiredInstructions(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/mark-expired`, null);
+  }
+
+  /**
+   * Valide une référence de paiement
+   */
+  validatePaymentReference(reference: string): Observable<PaymentReferenceValidationDTO> {
+    return this.http.get<PaymentReferenceValidationDTO>(`${this.baseUrl}/validate/${reference}`);
   }
 
   /**
    * Obtenir les métriques d'engagement
    */
-  getEngagementMetrics(partnerId: string): Observable<Record<string, any>> {
-    return this.http.get<Record<string, any>>(
+  getEngagementMetrics(partnerId: string): Observable<InstructionEngagementMetricsDTO> {
+    return this.http.get<InstructionEngagementMetricsDTO>(
       `${this.baseUrl}/partner/${partnerId}/metrics/engagement`
     );
   }
 
   /**
+   * Obtient les statistiques par langue
+   */
+  getLanguageStats(partnerId: string): Observable<InstructionLanguageStatsDTO[]> {
+    return this.http.get<InstructionLanguageStatsDTO[]>(`${this.baseUrl}/partner/${partnerId}/metrics/languages`);
+  }
+
+  /**
+   * Obtient les statistiques par canal
+   */
+  getChannelStats(partnerId: string): Observable<InstructionChannelStatsDTO[]> {
+    return this.http.get<InstructionChannelStatsDTO[]>(`${this.baseUrl}/partner/${partnerId}/metrics/channels`);
+  }
+
+  /**
+   * Obtient les statistiques globales
+   */
+  getGlobalStats(): Observable<InstructionGlobalStatsDTO> {
+    return this.http.get<InstructionGlobalStatsDTO>(`${this.baseUrl}/stats/summary`);
+  }
+
+  /**
    * Vérifier la santé de l'API
    */
-  healthCheck(): Observable<string> {
-    return this.http.get(`${this.baseUrl}/health`, { responseType: 'text' });
+  healthCheck(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/health`);
   }
 }

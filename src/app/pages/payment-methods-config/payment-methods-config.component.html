@@ -1,0 +1,303 @@
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="fas fa-credit-card me-2"></i>
+            Configuration des Méthodes de Paiement
+          </h4>
+          <button class="btn btn-light btn-sm" (click)="previewInstruction()" [disabled]="loading || !paymentMethods">
+            <i class="fas fa-eye me-1"></i>
+            Aperçu
+          </button>
+        </div>
+
+        <div class="card-body">
+          @if (loading) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+              </div>
+              <p class="mt-3">Chargement de la configuration...</p>
+            </div>
+          } @else {
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-4" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  [class.active]="activeTab === 'mobile-money'"
+                  (click)="activeTab = 'mobile-money'"
+                  type="button">
+                  <i class="fas fa-mobile-alt me-2"></i>
+                  Mobile Money
+                  @if (paymentMethods?.mobileMoneyProviders?.length) {
+                    <span class="badge bg-success ms-2">{{ paymentMethods?.mobileMoneyProviders?.length }}</span>
+                  }
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  [class.active]="activeTab === 'bank-transfer'"
+                  (click)="activeTab = 'bank-transfer'"
+                  type="button">
+                  <i class="fas fa-university me-2"></i>
+                  Virement Bancaire
+                  @if (paymentMethods?.bankTransfer?.enabled) {
+                    <span class="badge bg-success ms-2">Actif</span>
+                  }
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  [class.active]="activeTab === 'cash'"
+                  (click)="activeTab = 'cash'"
+                  type="button">
+                  <i class="fas fa-money-bill-wave me-2"></i>
+                  Paiement Espèces
+                  @if (paymentMethods?.cash?.enabled) {
+                    <span class="badge bg-success ms-2">{{ paymentMethods?.cash?.locations?.length || 0 }} agences</span>
+                  }
+                </button>
+              </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+              <!-- Mobile Money Tab -->
+              @if (activeTab === 'mobile-money') {
+                <div class="tab-pane fade show active">
+                  <div class="row mb-4">
+                    <div class="col-12">
+                      <h5 class="mb-3">Ajouter un Provider</h5>
+                      <div class="d-flex gap-2 flex-wrap">
+                        @for (provider of availableProviders; track provider.code) {
+                          <button
+                            class="btn btn-outline-primary"
+                            (click)="addMobileMoneyProvider(provider.code)">
+                            <i class="fas fa-plus me-1"></i>
+                            {{ provider.name }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  @if (paymentMethods?.mobileMoneyProviders?.length) {
+                    <div class="row">
+                      @for (provider of paymentMethods?.mobileMoneyProviders; track $index; let i = $index) {
+                        <div class="col-md-6 col-lg-4 mb-3">
+                          <div class="card h-100" [class.border-success]="provider.enabled">
+                            <div class="card-header d-flex justify-content-between align-items-center"
+                                 [style.background-color]="provider.brandColor"
+                                 [style.color]="'#fff'">
+                              <strong>{{ provider.displayName }}</strong>
+                              <div>
+                                <button
+                                  class="btn btn-sm btn-light me-1"
+                                  (click)="toggleProviderEnabled(provider)"
+                                  [title]="provider.enabled ? 'Désactiver' : 'Activer'">
+                                  <i class="fas" [class.fa-toggle-on]="provider.enabled" [class.fa-toggle-off]="!provider.enabled"></i>
+                                </button>
+                                <button
+                                  class="btn btn-sm btn-danger"
+                                  (click)="removeMobileMoneyProvider(i)"
+                                  title="Supprimer">
+                                  <i class="fas fa-trash"></i>
+                                </button>
+                              </div>
+                            </div>
+                            <div class="card-body">
+                              <div class="mb-3">
+                                <label class="form-label small">Code Marchand</label>
+                                <input type="text" class="form-control form-control-sm" [(ngModel)]="provider.merchantCode" placeholder="Ex: M123456">
+                              </div>
+                              <div class="mb-3">
+                                <label class="form-label small">Nom Marchand</label>
+                                <input type="text" class="form-control form-control-sm" [(ngModel)]="provider.merchantName" placeholder="Ex: Mon Entreprise">
+                              </div>
+                              <div class="mb-3">
+                                <label class="form-label small">Téléphone Marchand</label>
+                                <input type="text" class="form-control form-control-sm" [(ngModel)]="provider.merchantPhone" placeholder="+221XXXXXXXXX">
+                              </div>
+                              <div class="mb-3">
+                                <label class="form-label small">Code USSD</label>
+                                <input type="text" class="form-control form-control-sm" [(ngModel)]="provider.ussdCode" placeholder="*144*01#">
+                              </div>
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" [checked]="provider.enabled" (change)="toggleProviderEnabled(provider)" [id]="'enabled-' + i">
+                                <label class="form-check-label small" [for]="'enabled-' + i">
+                                  Actif
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="alert alert-info">
+                      <i class="fas fa-info-circle me-2"></i>
+                      Aucun provider Mobile Money configuré. Ajoutez-en un pour commencer.
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Bank Transfer Tab -->
+              @if (activeTab === 'bank-transfer') {
+                <div class="tab-pane fade show active">
+                  @if (paymentMethods?.bankTransfer) {
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label class="form-label">Nom de la Banque</label>
+                          <input type="text" class="form-control" [(ngModel)]="paymentMethods!.bankTransfer!.bankName" placeholder="Ex: CBAO">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Nom du Titulaire</label>
+                          <input type="text" class="form-control" [(ngModel)]="paymentMethods!.bankTransfer!.accountName" placeholder="Ex: Mon Entreprise SARL">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Numéro de Compte</label>
+                          <input type="text" class="form-control" [(ngModel)]="paymentMethods!.bankTransfer!.accountNumber" placeholder="Ex: 1234567890">
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label class="form-label">IBAN (optionnel)</label>
+                          <input type="text" class="form-control" [(ngModel)]="paymentMethods!.bankTransfer!.iban" placeholder="Ex: SN12CBAO...">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Code SWIFT (optionnel)</label>
+                          <input type="text" class="form-control" [(ngModel)]="paymentMethods!.bankTransfer!.swiftCode" placeholder="Ex: CBAOSNDA">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">Code RIB (optionnel)</label>
+                          <input type="text" class="form-control" [(ngModel)]="paymentMethods!.bankTransfer!.ribCode" placeholder="Ex: 12345 67890 12345 67">
+                        </div>
+                      </div>
+                      <div class="col-12">
+                        <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" [(ngModel)]="paymentMethods!.bankTransfer!.enabled" id="bankEnabled">
+                          <label class="form-check-label" for="bankEnabled">
+                            Virement bancaire activé
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="alert alert-info">
+                      <i class="fas fa-info-circle me-2"></i>
+                      Le virement bancaire n'est pas encore configuré.
+                      <button class="btn btn-primary btn-sm ms-3" (click)="enableBankTransfer()">
+                        <i class="fas fa-plus me-1"></i>
+                        Activer le virement bancaire
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Cash Payment Tab -->
+              @if (activeTab === 'cash') {
+                <div class="tab-pane fade show active">
+                  @if (paymentMethods?.cash) {
+                    <div class="mb-3">
+                      <button class="btn btn-primary" (click)="addCashLocation()">
+                        <i class="fas fa-plus me-1"></i>
+                        Ajouter une agence
+                      </button>
+                    </div>
+
+                    @if (paymentMethods?.cash?.locations?.length) {
+                      <div class="row">
+                        @for (location of paymentMethods?.cash?.locations; track $index; let i = $index) {
+                          <div class="col-md-6 mb-3">
+                            <div class="card">
+                              <div class="card-header d-flex justify-content-between align-items-center">
+                                <strong>Agence {{ i + 1 }}</strong>
+                                <button class="btn btn-sm btn-danger" (click)="removeCashLocation(i)">
+                                  <i class="fas fa-trash"></i>
+                                </button>
+                              </div>
+                              <div class="card-body">
+                                <div class="mb-2">
+                                  <label class="form-label small">Nom</label>
+                                  <input type="text" class="form-control form-control-sm" [(ngModel)]="location.name" placeholder="Ex: Agence Plateau">
+                                </div>
+                                <div class="mb-2">
+                                  <label class="form-label small">Adresse</label>
+                                  <input type="text" class="form-control form-control-sm" [(ngModel)]="location.address" placeholder="Ex: Avenue Lamine Guèye">
+                                </div>
+                                <div class="row">
+                                  <div class="col-6">
+                                    <label class="form-label small">Ville</label>
+                                    <input type="text" class="form-control form-control-sm" [(ngModel)]="location.city" placeholder="Dakar">
+                                  </div>
+                                  <div class="col-6">
+                                    <label class="form-label small">Téléphone</label>
+                                    <input type="text" class="form-control form-control-sm" [(ngModel)]="location.phone" placeholder="+221...">
+                                  </div>
+                                </div>
+                                <div class="form-check form-switch mt-2">
+                                  <input class="form-check-input" type="checkbox" [(ngModel)]="location.active" [id]="'location-' + i">
+                                  <label class="form-check-label small" [for]="'location-' + i">
+                                    Agence active
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Aucune agence configurée. Ajoutez-en une pour commencer.
+                      </div>
+                    }
+
+                    <div class="form-check form-switch mt-3">
+                      <input class="form-check-input" type="checkbox" [(ngModel)]="paymentMethods!.cash!.enabled" id="cashEnabled">
+                      <label class="form-check-label" for="cashEnabled">
+                        Paiement en espèces activé
+                      </label>
+                    </div>
+                  } @else {
+                    <div class="alert alert-info">
+                      <i class="fas fa-info-circle me-2"></i>
+                      Le paiement en espèces n'est pas encore configuré.
+                      <button class="btn btn-primary btn-sm ms-3" (click)="enableCashPayment()">
+                        <i class="fas fa-plus me-1"></i>
+                        Activer le paiement en espèces
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="card-footer d-flex justify-content-between">
+          <button class="btn btn-secondary" (click)="loadPaymentMethods()" [disabled]="loading || saving">
+            <i class="fas fa-sync me-1"></i>
+            Recharger
+          </button>
+          <button class="btn btn-success" (click)="saveConfiguration()" [disabled]="loading || saving || !paymentMethods">
+            @if (saving) {
+              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            } @else {
+              <i class="fas fa-save me-1"></i>
+            }
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
