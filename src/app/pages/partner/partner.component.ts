@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NavbarComponent, FooterComponent } from '../../components';
 import { PartnerModalComponent } from '../../components/partner-modal/partner-modal.component';
 import { PartnerService } from '../../services';

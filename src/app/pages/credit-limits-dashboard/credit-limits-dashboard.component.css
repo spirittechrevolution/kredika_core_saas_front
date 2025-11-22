@@ -1,0 +1,40 @@
+.card {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.progress {
+  border-radius: 8px;
+}
+
+.badge-info {
+  background-color: #17a2b8;
+}
+
+.badge-warning {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.badge-danger {
+  background-color: #dc3545;
+}
+
+.modal-backdrop.show {
+  opacity: 0.5;
+}
+
+.alert {
+  border-radius: 6px;
+}
+
+.table th {
+  width: 40%;
+  font-weight: 600;
+}

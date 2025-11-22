@@ -1,3 +1,5 @@
+import { PartnerPaymentMethodsDTO } from './payment-method-config.model';
+
 // Partner Models
 export enum PartnerStatus {
   ACTIVE = 'ACTIVE',
@@ -19,6 +21,7 @@ export interface PartnerRequestDTO {
   businessSector?: string;
   registrationNumber?: string;
   maxCreditsPerMonth?: number;
+  paymentMethods?: PartnerPaymentMethodsDTO;
 }
 
 export interface PartnerResponseDTO {
@@ -41,6 +44,7 @@ export interface PartnerResponseDTO {
   totalReservations: number;
   totalCreditVolume: number;
   totalCommissionEarned: number;
+  status: PartnerStatus;
   portfolioPerformanceScore: number;
   defaultRate: number;
   latePaymentRate: number;
@@ -54,30 +58,9 @@ export interface PartnerResponseDTO {
   apiKeyExpiresAt?: Date;
   authProvider?: string;
   lastLoginAt?: Date;
-}
 
-export interface CreditLimitsUpdateDTO {
-  maxCreditAmount?: number;
-  maxDurationMonths?: number;
-  commissionRate?: number;
-  defaultInterestRate?: number;
-  totalActiveCredits?: number;
-}
-
-export interface CreditLimitsResponseDTO {
-  partnerKey: string;
-  partnerName: string;
-  maxCreditAmount: number;
-  maxDurationMonths: number;
-  commissionRate: number;
-  defaultInterestRate: number;
-  totalActiveCredits: number;
-  totalCreditVolume: number;
-  portfolioPerformanceScore: number;
-  updatedAt: Date;
-  utilizationRate: number;
-  remainingCreditLimit: number;
-  hasAvailableCredit: boolean;
-  estimatedRemainingCredits: number;
-  averageCreditAmount: number;
+  // Nouvelles propriétés pour méthodes de paiement
+  paymentMethods?: PartnerPaymentMethodsDTO;
+  hasPaymentMethodsConfigured?: boolean;
+  activePaymentMethodsCount?: number;
 }
