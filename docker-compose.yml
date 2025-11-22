@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  kredika-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kredika-frontend
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - kredika-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  kredika-network:
+    driver: bridge
+
+# Pour une configuration avec le backend
+# Décommentez et ajustez selon votre configuration backend
+
+# services:
+#   kredika-frontend:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     container_name: kredika-frontend
+#     ports:
+#       - "8080:80"
+#     environment:
+#       - NODE_ENV=production
+#       - API_URL=http://kredika-backend:8081
+#     depends_on:
+#       - kredika-backend
+#     restart: unless-stopped
+#     networks:
+#       - kredika-network
+#
+#   kredika-backend:
+#     image: ${DOCKER_USERNAME}/kredika-core:latest
+#     container_name: kredika-backend
+#     ports:
+#       - "8081:8080"
+#     environment:
+#       - SPRING_PROFILES_ACTIVE=prod
+#       - DB_HOST=postgres
+#       - DB_PORT=5432
+#       - DB_NAME=kredika_db
+#       - DB_USERNAME=postgres
+#       - DB_PASSWORD=${DB_PASSWORD}
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     restart: unless-stopped
+#     networks:
+#       - kredika-network
+#
+#   postgres:
+#     image: postgres:15-alpine
+#     container_name: kredika-postgres
+#     environment:
+#       - POSTGRES_DB=kredika_db
+#       - POSTGRES_USER=postgres
+#       - POSTGRES_PASSWORD=${DB_PASSWORD}
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     ports:
+#       - "5432:5432"
+#     restart: unless-stopped
+#     networks:
+#       - kredika-network
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U postgres"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#
+# volumes:
+#   postgres_data:

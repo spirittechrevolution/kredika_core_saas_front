@@ -1,0 +1,296 @@
+name: CI/CD Pipeline Frontend
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'hotfix/**'
+      - 'refactor/**'
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '20'
+  CACHE_VERSION: v1
+
+jobs:
+  lint-and-format:
+    name: Linting et Formatage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Installation des dépendances
+        run: npm ci --legacy-peer-deps
+
+      - name: Vérification du formatage (Prettier)
+        run: npx prettier --check "src/**/*.{ts,html,css,scss,json}"
+        continue-on-error: true
+
+      # - name: Linting du code
+      #   run: npm run lint
+      #   continue-on-error: true
+
+  test:
+    name: Tests Unitaires
+    runs-on: ubuntu-latest
+    needs: lint-and-format
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Installation des dépendances
+        run: npm ci --legacy-peer-deps
+
+      - name: Exécution des tests
+        run: npm run test -- --run --coverage
+        continue-on-error: true
+
+      - name: Upload du rapport de couverture
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  build:
+    name: Build de l'application
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Installation des dépendances
+        run: npm ci --legacy-peer-deps
+
+      - name: Build de l'application
+        run: npm run build
+
+      - name: Vérification des fichiers buildés
+        run: |
+          echo "📦 Contenu du dossier dist :"
+          ls -la dist/kredika_core_saas_front_config/browser/ || ls -la dist/
+
+      - name: Upload de l'artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kredika-frontend-dist
+          path: dist/
+          retention-days: 7
+
+  docker:
+    name: Build et Push Docker Image
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Configuration de Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extraction du nom de branche
+        id: branch
+        run: |
+          # Récupère le nom de la branche et remplace les / par -
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          BRANCH_TAG=$(echo "$BRANCH_NAME" | sed 's/\//-/g')
+          echo "tag=$BRANCH_TAG" >> $GITHUB_OUTPUT
+          echo "name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "📌 Branche: $BRANCH_NAME → Tag: $BRANCH_TAG"
+
+      - name: Génération des tags Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/kredika-frontend
+          tags: |
+            # Tag basé sur la branche
+            type=raw,value=${{ steps.branch.outputs.tag }}
+            # Tag 'latest' seulement sur main
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            # Tag avec le SHA du commit
+            type=sha,prefix=${{ steps.branch.outputs.tag }}-
+            # Tag avec la date
+            type=raw,value=${{ steps.branch.outputs.tag }}-{{date 'YYYYMMDD-HHmmss'}}
+
+      - name: Build et Push de l'image Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Affichage des tags créés
+        run: |
+          echo "✅ Image Docker créée avec les tags :"
+          echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n'
+
+  release:
+    name: Release GitHub
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Téléchargement de l'artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: kredika-frontend-dist
+          path: dist/
+
+      - name: Génération de la version
+        id: version
+        run: |
+          # Récupère le dernier tag ou commence à v1.0.0
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+          # Incrémente la version (patch)
+          VERSION=$(echo $LAST_TAG | sed 's/v//')
+          IFS='.' read -ra PARTS <<< "$VERSION"
+          PATCH=$((PARTS[2] + 1))
+          NEW_VERSION="v${PARTS[0]}.${PARTS[1]}.$PATCH"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Nouvelle version : $NEW_VERSION"
+
+      - name: Génération des notes de version
+        id: changelog
+        run: |
+          # Génère un changelog automatique
+          LAST_TAG="${{ steps.version.outputs.last_tag }}"
+          {
+            echo "## 🚀 Nouveautés"
+            echo ""
+            if [ "$LAST_TAG" != "v0.0.0" ]; then
+              git log $LAST_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges | head -20
+            else
+              echo "- Version initiale"
+            fi
+            echo ""
+            echo ""
+            echo "## 📦 Artefacts"
+            echo "- Docker Image: \`${{ secrets.DOCKER_USERNAME }}/kredika-frontend:latest\`"
+            echo "- Build Angular: Voir assets ci-dessous"
+            echo ""
+            echo "## 🔧 Technologies"
+            echo "- Angular $(cat package.json | grep '"@angular/core"' | head -1 | awk -F: '{ print $2 }' | sed 's/[", ]//g')"
+            echo "- Node.js ${{ env.NODE_VERSION }}"
+          } > RELEASE_NOTES.md
+          cat RELEASE_NOTES.md
+
+      - name: Création d'une archive de l'application
+        run: |
+          cd dist
+          tar -czf ../kredika-frontend-${{ steps.version.outputs.new_version }}.tar.gz .
+          cd ..
+          echo "✅ Archive créée : kredika-frontend-${{ steps.version.outputs.new_version }}.tar.gz"
+
+      - name: Création de la release GitHub
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.new_version }}
+          name: Release ${{ steps.version.outputs.new_version }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            kredika-frontend-${{ steps.version.outputs.new_version }}.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # deploy:
+  #   name: Déploiement Production
+  #   runs-on: ubuntu-latest
+  #   needs: release
+  #   if: github.ref == 'refs/heads/main'
+  #
+  #   steps:
+  #     - name: Déploiement sur le serveur
+  #       uses: appleboy/ssh-action@v1.0.0
+  #       with:
+  #         host: ${{ secrets.DEPLOY_HOST }}
+  #         username: ${{ secrets.DEPLOY_USER }}
+  #         key: ${{ secrets.DEPLOY_SSH_KEY }}
+  #         script: |
+  #           cd /opt/kredika-frontend
+  #           docker-compose pull
+  #           docker-compose up -d
+  #           docker image prune -f
+  #           echo "✅ Déploiement frontend terminé !"
+
+  # deploy-staging:
+  #   name: Déploiement Staging
+  #   runs-on: ubuntu-latest
+  #   needs: docker
+  #   if: github.ref == 'refs/heads/develop'
+  #
+  #   steps:
+  #     - name: Déploiement sur le serveur de staging
+  #       uses: appleboy/ssh-action@v1.0.0
+  #       with:
+  #         host: ${{ secrets.STAGING_HOST }}
+  #         username: ${{ secrets.STAGING_USER }}
+  #         key: ${{ secrets.STAGING_SSH_KEY }}
+  #         script: |
+  #           cd /opt/kredika-frontend-staging
+  #           docker-compose pull
+  #           docker-compose up -d
+  #           docker image prune -f
+  #           echo "✅ Déploiement staging terminé !"
+
+  # 💡 Pour activer le déploiement plus tard :
+  # 1. Décommente ces jobs
+  # 2. Ajoute les secrets GitHub :
+  #    - DOCKER_USERNAME
+  #    - DOCKER_PASSWORD
+  #    - DEPLOY_HOST
+  #    - DEPLOY_USER
+  #    - DEPLOY_SSH_KEY
+  #    - STAGING_HOST (optionnel)
+  #    - STAGING_USER (optionnel)
+  #    - STAGING_SSH_KEY (optionnel)
