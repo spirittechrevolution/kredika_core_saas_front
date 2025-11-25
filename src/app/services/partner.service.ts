@@ -123,6 +123,44 @@ export class PartnerService {
   }
 
   /**
+   * Récupérer les méthodes de paiement d'un partenaire
+   */
+  getPaymentMethods(id: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/${id}/payment-methods`);
+  }
+
+  /**
+   * Configurer les méthodes de paiement d'un partenaire
+   */
+  configurePaymentMethods(id: string, paymentMethods: any): Observable<PartnerResponseDTO> {
+    return this.http.put<PartnerResponseDTO>(`${this.baseUrl}/${id}/payment-methods`, paymentMethods);
+  }
+
+  /**
+   * Prévisualiser une instruction de paiement avec les méthodes configurées
+   */
+  previewPaymentMethods(id: string, language: string = 'fr', channel: string = 'WEB'): Observable<any> {
+    const params = new HttpParams()
+      .set('language', language)
+      .set('channel', channel);
+    return this.http.get<any>(`${this.baseUrl}/${id}/payment-methods/preview`, { params });
+  }
+
+  /**
+   * Vérifier si un partenaire peut générer des instructions de paiement
+   */
+  canGeneratePaymentInstructions(id: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/${id}/can-generate-instructions`);
+  }
+
+  /**
+   * Obtenir les statistiques d'utilisation des méthodes de paiement
+   */
+  getPaymentMethodsStats(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/stats/payment-methods`);
+  }
+
+  /**
    * Vérifier la santé de l'API
    */
   healthCheck(): Observable<string> {

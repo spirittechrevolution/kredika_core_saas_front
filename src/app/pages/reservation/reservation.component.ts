@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NavbarComponent, FooterComponent } from '../../components';
-import { CreditReservationService } from '../../services';
+import { CreditReservationService, ToastService } from '../../services';
 import { CreditReservationResponseDTO } from '../../models';
 
 @Component({
@@ -111,6 +111,7 @@ import { CreditReservationResponseDTO } from '../../models';
 })
 export class ReservationComponent implements OnInit {
   private readonly creditReservationService = inject(CreditReservationService);
+  private readonly toastService = inject(ToastService);
 
   reservations = signal<CreditReservationResponseDTO[]>([]);
   loading = signal(true);
@@ -127,6 +128,7 @@ export class ReservationComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading reservations:', error);
+        this.toastService.error('Erreur lors du chargement des réservations');
         this.loading.set(false);
       }
     });

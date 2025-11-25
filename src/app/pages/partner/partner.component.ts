@@ -2,15 +2,14 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent, FooterComponent } from '../../components';
-import { PartnerModalComponent } from '../../components/partner-modal/partner-modal.component';
-import { PartnerService } from '../../services';
+import { PartnerService, AuthService } from '../../services';
 import { ToastService } from '../../services/toast.service';
 import { PartnerResponseDTO, PartnerRequestDTO } from '../../models';
 
 @Component({
   selector: 'app-partner',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent, FooterComponent, PartnerModalComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, FooterComponent],
   template: `
     <div class="min-h-screen flex flex-col bg-gray-50">
       <app-navbar />
@@ -20,22 +19,130 @@ import { PartnerResponseDTO, PartnerRequestDTO } from '../../models';
           <div class="px-4 py-6 sm:px-0">
             <div class="flex justify-between items-center">
               <div>
-                <h1 class="text-3xl font-bold text-gray-900">Partenaires</h1>
+                <h1 class="text-3xl font-bold text-gray-900">Mon Profil Partenaire</h1>
                 <p class="mt-2 text-sm text-gray-600">
-                  Gérez vos partenaires commerciaux et leurs limites de crédit
+                  Consultez vos informations et vos limites de crédit
                 </p>
               </div>
-              <button
-                (click)="toggleCreateForm()"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                <i class="fas fa-plus mr-2"></i>
-                Nouveau partenaire
-              </button>
+              @if (currentPartner()) {
+                <div class="flex items-center space-x-3">
+                  <span [class]="currentPartner()!.active ? 'px-4 py-2 text-sm font-semibold rounded-full bg-green-100 text-green-800' : 'px-4 py-2 text-sm font-semibold rounded-full bg-red-100 text-red-800'">
+                    <i [class]="currentPartner()!.active ? 'fas fa-check-circle mr-2' : 'fas fa-times-circle mr-2'"></i>
+                    {{ currentPartner()!.active ? 'Compte Actif' : 'Compte Inactif' }}
+                  </span>
+                </div>
+              }
             </div>
           </div>
 
-          <!-- Formulaire de création -->
+          <!-- Carte d'information du partenaire -->
+          @if (currentPartner() && !showCreateForm()) {
+            <div class="px-4 sm:px-0 mt-6">
+              <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                <!-- Header avec gradient -->
+                <div class="px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600">
+                  <h3 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fas fa-user-circle mr-2"></i>
+                    Informations du Partenaire
+                  </h3>
+                </div>
+
+                <!-- Contenu -->
+                <div class="p-6">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nom -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Nom</label>
+                      <p class="text-base font-semibold text-gray-900">{{ currentPartner()!.name }}</p>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Email</label>
+                      <p class="text-base text-gray-900">{{ currentPartner()!.contactEmail }}</p>
+                    </div>
+
+                    <!-- Téléphone -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Téléphone</label>
+                      <p class="text-base text-gray-900">{{ currentPartner()!.contactPhone || 'Non renseigné' }}</p>
+                    </div>
+
+                    <!-- Partner ID -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Partner ID</label>
+                      <p class="text-base text-gray-900 font-mono text-sm">{{ currentPartner()!.partnerId }}</p>
+                    </div>
+
+                    <!-- Taux de commission -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Taux de Commission</label>
+                      <p class="text-base font-semibold text-indigo-600">{{ currentPartner()!.commissionRate }}%</p>
+                    </div>
+
+                    <!-- Secteur d'activité -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Secteur d'Activité</label>
+                      <p class="text-base text-gray-900">{{ currentPartner()!.businessSector || 'Non renseigné' }}</p>
+                    </div>
+
+                    <!-- Montant max de crédit -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Crédit Maximum</label>
+                      <p class="text-base font-semibold text-gray-900">{{ formatCurrency(currentPartner()!.maxCreditAmount) }}</p>
+                    </div>
+
+                    <!-- Durée max -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Durée Maximum</label>
+                      <p class="text-base text-gray-900">{{ currentPartner()!.maxDurationMonths }} mois</p>
+                    </div>
+
+                    <!-- Numéro d'enregistrement -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Numéro d'Enregistrement</label>
+                      <p class="text-base text-gray-900">{{ currentPartner()!.registrationNumber || 'Non renseigné' }}</p>
+                    </div>
+
+                    <!-- Date de création -->
+                    <div>
+                      <label class="block text-sm font-medium text-gray-500 mb-1">Date de Création</label>
+                      <p class="text-base text-gray-900">{{ formatDate(currentPartner()!.createdAt) }}</p>
+                    </div>
+
+                    <!-- Description (full width) -->
+                    @if (currentPartner()!.description) {
+                      <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Description</label>
+                        <p class="text-base text-gray-900">{{ currentPartner()!.description }}</p>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Statistiques -->
+                  <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="text-sm font-semibold text-gray-900 mb-4">Statistiques</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div class="bg-blue-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600">Réservations Totales</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ currentPartner()!.totalReservations || 0 }}</p>
+                      </div>
+                      <div class="bg-green-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600">Volume Total</p>
+                        <p class="text-2xl font-bold text-green-600">{{ formatCurrency(currentPartner()!.totalCreditVolume || 0) }}</p>
+                      </div>
+                      <div class="bg-purple-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-600">Commission Totale</p>
+                        <p class="text-2xl font-bold text-purple-600">{{ formatCurrency(currentPartner()!.totalCommissionEarned || 0) }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Formulaire de création (réservé aux admins) -->
           @if (showCreateForm()) {
             <div class="px-4 sm:px-0 mt-6">
               <div class="bg-white shadow-lg rounded-lg border border-gray-200">
@@ -269,7 +376,9 @@ import { PartnerResponseDTO, PartnerRequestDTO } from '../../models';
             </div>
           }
 
-          <div class="px-4 sm:px-0 mt-6">
+          <!-- Ancienne table (cachée car remplacée par la carte d'info) -->
+          @if (false) {
+            <div class="px-4 sm:px-0 mt-6">
             @if (loading()) {
               <div class="text-center py-12">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -291,9 +400,6 @@ import { PartnerResponseDTO, PartnerRequestDTO } from '../../models';
                       <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Commission
                       </th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
@@ -313,24 +419,10 @@ import { PartnerResponseDTO, PartnerRequestDTO } from '../../models';
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {{ partner.commissionRate }}%
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            (click)="openEditModal(partner)"
-                            class="text-indigo-600 hover:text-indigo-900 mr-4"
-                          >
-                            Modifier
-                          </button>
-                          <button
-                            (click)="deletePartner(partner.partnerId)"
-                            class="text-red-600 hover:text-red-900"
-                          >
-                            Supprimer
-                          </button>
-                        </td>
                       </tr>
                     } @empty {
                       <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
                           Aucun partenaire trouvé
                         </td>
                       </tr>
@@ -340,30 +432,24 @@ import { PartnerResponseDTO, PartnerRequestDTO } from '../../models';
               </div>
             }
           </div>
+          }
         </div>
       </main>
 
       <app-footer />
     </div>
-
-    <app-partner-modal
-      [open]="isModalOpen()"
-      [partner]="selectedPartner()"
-      (closeModal)="closeModal()"
-      (submitPartner)="handleSubmit($event)"
-    />
   `
 })
 export class PartnerComponent implements OnInit {
   private readonly partnerService = inject(PartnerService);
+  private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
 
   partners = signal<PartnerResponseDTO[]>([]);
   loading = signal(true);
-  isModalOpen = signal(false);
-  selectedPartner = signal<PartnerRequestDTO | null>(null);
   showCreateForm = signal(false);
   submitting = signal(false);
+  currentPartner = signal<PartnerResponseDTO | null>(null);
 
   newPartner: PartnerRequestDTO = {
     name: '',
@@ -380,21 +466,36 @@ export class PartnerComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.loadPartners();
+    this.loadPartnerProfile();
   }
 
-  loadPartners(): void {
-    this.partnerService.getAllPartners().subscribe({
-      next: (data) => {
-        this.partners.set(data);
+  loadPartnerProfile(): void {
+    const partnerId = this.authService.getPartnerId();
+
+    if (!partnerId) {
+      this.toastService.error('Impossible de récupérer votre identifiant');
+      this.loading.set(false);
+      return;
+    }
+
+    this.partnerService.getPartnerById(partnerId).subscribe({
+      next: (partner) => {
+        this.currentPartner.set(partner);
+        this.partners.set([partner]); // Afficher uniquement le partenaire connecté
         this.loading.set(false);
       },
       error: (error) => {
-        console.error('Error loading partners:', error);
-        this.toastService.error('Erreur lors du chargement des partenaires');
+        console.error('Error loading partner profile:', error);
+        this.toastService.error('Erreur lors du chargement de votre profil');
         this.loading.set(false);
       }
     });
+  }
+
+  loadPartners(): void {
+    // Cette méthode n'est plus utilisée car un partenaire ne voit que son profil
+    // Gardée pour compatibilité future (admin pourrait voir tous les partenaires)
+    this.loadPartnerProfile();
   }
 
   toggleCreateForm(): void {
@@ -443,61 +544,19 @@ export class PartnerComponent implements OnInit {
     };
   }
 
-  openCreateModal(): void {
-    this.selectedPartner.set(null);
-    this.isModalOpen.set(true);
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'XOF',
+      minimumFractionDigits: 0
+    }).format(amount);
   }
 
-  openEditModal(partner: PartnerResponseDTO): void {
-    const partnerRequest: PartnerRequestDTO = {
-      name: partner.name,
-      contactEmail: partner.contactEmail,
-      contactPhone: partner.contactPhone || '',
-      callbackUrl: partner.callbackUrl,
-      commissionRate: partner.commissionRate,
-      maxCreditAmount: partner.maxCreditAmount,
-      maxDurationMonths: partner.maxDurationMonths,
-      businessSector: partner.businessSector,
-      description: partner.description
-    };
-    this.selectedPartner.set(partnerRequest);
-    this.isModalOpen.set(true);
-  }
-
-  closeModal(): void {
-    this.isModalOpen.set(false);
-    this.selectedPartner.set(null);
-  }
-
-  handleSubmit(partnerData: PartnerRequestDTO): void {
-    if (this.selectedPartner()) {
-      this.toastService.info('Fonctionnalité de modification en cours de développement');
-    } else {
-      this.partnerService.createPartner(partnerData).subscribe({
-        next: (newPartner) => {
-          this.partners.update(partners => [...partners, newPartner]);
-          this.toastService.success('Partenaire créé avec succès');
-        },
-        error: (error) => {
-          console.error('Error creating partner:', error);
-          this.toastService.error('Erreur lors de la création du partenaire');
-        }
-      });
-    }
-  }
-
-  deletePartner(id: string): void {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce partenaire ?')) {
-      this.partnerService.deletePartner(id).subscribe({
-        next: () => {
-          this.partners.update(partners => partners.filter(p => p.partnerId !== id));
-          this.toastService.success('Partenaire supprimé avec succès');
-        },
-        error: (error) => {
-          console.error('Error deleting partner:', error);
-          this.toastService.error('Erreur lors de la suppression du partenaire');
-        }
-      });
-    }
+  formatDate(date: Date): string {
+    return new Intl.DateTimeFormat('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(new Date(date));
   }
 }

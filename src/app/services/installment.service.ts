@@ -29,7 +29,7 @@ export class InstallmentService {
   /**
    * Lister les échéances à venir
    */
-  getUpcomingInstallments(daysAhead: number = 30): Observable<InstallmentDTO[]> {
+  getUpcomingInstallments(daysAhead: number = 365): Observable<InstallmentDTO[]> {
     const params = new HttpParams().set('daysAhead', daysAhead.toString());
     return this.http.get<InstallmentDTO[]>(`${this.baseUrl}/upcoming`, { params });
   }

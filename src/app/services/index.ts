@@ -6,4 +6,5 @@ export * from './installment.service';
 export * from './payment-instruction.service';
 export * from './payment-method-config.service';
 export * from './credit-limits.service';
+export * from './payment-event.service';
 export * from './toast.service';

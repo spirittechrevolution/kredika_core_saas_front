@@ -9,8 +9,27 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const token = authService.getToken();
 
-  // Clone la requête et ajoute le header Authorization si token existe
-  const authReq = token
+  // Routes qui ne nécessitent pas d'authentification
+  const publicRoutes = [
+    '/v1/auth/token',
+    '/v1/auth/refresh',
+    '/v1/admin/auth/login',
+    '/v1/admin/auth/refresh',
+    '/health'
+  ];
+
+  // Vérifier si la route actuelle est publique
+  let isPublicRoute = publicRoutes.some(route => req.url.includes(route));
+
+  // Exception: POST /v1/partners (sans ID) est public pour la création
+  // mais GET /v1/partners/{id} nécessite une authentification
+  const partnerIdPattern = /\/v1\/partners\/[a-f0-9-]+/;
+  if (req.url.includes('/v1/partners') && req.method === 'POST' && !partnerIdPattern.exec(req.url)) {
+    isPublicRoute = true;
+  }
+
+  // Clone la requête et ajoute le header Authorization si token existe ET route non publique
+  const authReq = token && !isPublicRoute
     ? req.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
@@ -21,7 +40,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error) => {
       // Gestion des erreurs 401 (Non authentifié)
-      if (error.status === 401) {
+      if (error.status === 401 && !isPublicRoute) {
         authService.removeToken();
         router.navigate(['/login']);
       }

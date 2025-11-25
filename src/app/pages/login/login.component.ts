@@ -129,7 +129,7 @@ export class LoginComponent {
     }).subscribe({
       next: (response) => {
         if (response.success && response.accessToken) {
-          this.authService.saveToken(response.accessToken);
+          this.authService.saveAuthData(response);
           this.toastService.success('Connexion réussie');
           this.router.navigate(['/dashboard']);
         } else {

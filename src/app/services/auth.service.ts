@@ -13,6 +13,8 @@ export class AuthService {
   private readonly baseUrl = 'http://localhost:7575/api/v1/auth';
 
   private readonly tokenKey = 'kredika_access_token';
+  private readonly partnerIdKey = 'kredika_partner_id';
+  private readonly partnerNameKey = 'kredika_partner_name';
 
   /**
    * Vérifier si nous sommes dans un navigateur
@@ -68,6 +70,23 @@ export class AuthService {
   }
 
   /**
+   * Sauvegarder les données de la réponse d'authentification
+   */
+  saveAuthData(authResponse: AuthResponse): void {
+    if (this.isBrowser()) {
+      if (authResponse.accessToken) {
+        this.saveToken(authResponse.accessToken);
+      }
+      if (authResponse.partnerId) {
+        localStorage.setItem(this.partnerIdKey, authResponse.partnerId);
+      }
+      if (authResponse.partnerName) {
+        localStorage.setItem(this.partnerNameKey, authResponse.partnerName);
+      }
+    }
+  }
+
+  /**
    * Récupérer le token depuis le localStorage
    */
   getToken(): string | null {
@@ -83,6 +102,8 @@ export class AuthService {
   removeToken(): void {
     if (this.isBrowser()) {
       localStorage.removeItem(this.tokenKey);
+      localStorage.removeItem(this.partnerIdKey);
+      localStorage.removeItem(this.partnerNameKey);
     }
   }
 
@@ -106,27 +127,25 @@ export class AuthService {
   }
 
   /**
-   * Récupérer le partnerId depuis le token
+   * Récupérer le partnerId depuis le localStorage
    */
   getPartnerId(): string | null {
-    const token = this.getToken();
-    if (!token) return null;
-
-    const decoded = this.decodeToken(token);
-    return decoded?.partnerId || decoded?.sub || null;
+    if (this.isBrowser()) {
+      return localStorage.getItem(this.partnerIdKey);
+    }
+    return null;
   }
 
   /**
    * Récupérer les informations du partenaire connecté
    */
   getPartnerInfo(): { partnerId: string | null; partnerName: string | null } {
-    const token = this.getToken();
-    if (!token) return { partnerId: null, partnerName: null };
-
-    const decoded = this.decodeToken(token);
-    return {
-      partnerId: decoded?.partnerId || decoded?.sub || null,
-      partnerName: decoded?.partnerName || decoded?.name || null
-    };
+    if (this.isBrowser()) {
+      return {
+        partnerId: localStorage.getItem(this.partnerIdKey),
+        partnerName: localStorage.getItem(this.partnerNameKey)
+      };
+    }
+    return { partnerId: null, partnerName: null };
   }
 }

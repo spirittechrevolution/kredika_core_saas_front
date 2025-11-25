@@ -13,6 +13,7 @@ import {
   CreditLimitsDashboardComponent,
   DevelopersComponent
 } from './pages';
+import { AnalyticsComponent } from './pages/analytics/analytics.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -20,6 +21,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'developers', component: DevelopersComponent },
   { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
+  { path: 'analytics', component: AnalyticsComponent, canActivate: [authGuard] },
   { path: 'partenaires', component: PartnerComponent, canActivate: [authGuard] },
   { path: 'reservations', component: ReservationComponent, canActivate: [authGuard] },
   { path: 'reservations/:id', component: ReservationDetailComponent, canActivate: [authGuard] },
